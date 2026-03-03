@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #e1e4e8;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    header {
+      max-width: 960px;
+      margin: 0 auto 28px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #6e7681;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      max-width: 960px;
+      margin: 0 auto 28px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #e1e4e8;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-bar input:focus { border-color: #58a6ff; }
+
+    .search-bar input::placeholder { color: #484f58; }
+
+    .search-bar button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #238636;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .search-bar button:hover { background: #2ea043; }
+    .search-bar button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+
+    .api-key-row {
+      max-width: 960px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: #6e7681;
+    }
+
+    .api-key-row input {
+      flex: 1;
+      max-width: 340px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #e1e4e8;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    .api-key-row input:focus { border-color: #58a6ff; }
+
+    .api-key-row a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    .api-key-row a:hover { text-decoration: underline; }
+
+    .dashboard {
+      max-width: 960px;
+      margin: 0 auto;
+      display: none;
+    }
+
+    .company-header {
+      margin-bottom: 20px;
+    }
+
+    .company-header h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .company-header .ticker-badge {
+      display: inline-block;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      letter-spacing: 0.05em;
+    }
+
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .current-price {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .price-change {
+      font-size: 1.05rem;
+      font-weight: 500;
+    }
+
+    .price-change.up { color: #3fb950; }
+    .price-change.down { color: #f85149; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e1e4e8;
+    }
+
+    .chart-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+
+    .range-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .range-tab {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: transparent;
+      color: #8b949e;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .range-tab:hover { border-color: #58a6ff; color: #58a6ff; }
+    .range-tab.active { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+
+    canvas { display: block; }
+
+    .error-msg {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #2d1215;
+      border: 1px solid #f8514940;
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: #f85149;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .loading {
+      max-width: 960px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 48px;
+      color: #6e7681;
+      display: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border: 3px solid #21262d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .description {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #8b949e;
+      margin-bottom: 16px;
+    }
+
+    .description strong {
+      color: #e1e4e8;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    footer {
+      max-width: 960px;
+      margin: 28px auto 0;
+      font-size: 0.75rem;
+      color: #484f58;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Stock Dashboard</h1>
+  <p class="subtitle">Real-time stock data powered by Alpha Vantage</p>
+</header>
+
+<div class="api-key-row">
+  <label for="apiKey">Alpha Vantage API Key:</label>
+  <input type="text" id="apiKey" placeholder="Enter your free API key" />
+  <span>— Get one free at <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener">alphavantage.co</a></span>
+</div>
+
+<div class="search-bar">
+  <input type="text" id="tickerInput" placeholder="Enter ticker symbol (e.g. AAPL, MSFT, TSLA)" />
+  <button id="searchBtn" onclick="loadStock()">Search</button>
+</div>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p>Fetching stock data…</p>
+</div>
+
+<div class="error-msg" id="errorMsg"></div>
+
+<div class="dashboard" id="dashboard">
+  <div class="company-header">
+    <h2 id="companyName">—<span class="ticker-badge" id="tickerBadge">—</span></h2>
+    <div class="price-row">
+      <span class="current-price" id="currentPrice">—</span>
+      <span class="price-change" id="priceChange">—</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" id="statOpen">—</div></div>
+    <div class="stat-card"><div class="stat-label">Prev Close</div><div class="stat-value" id="statPrevClose">—</div></div>
+    <div class="stat-card"><div class="stat-label">Day High</div><div class="stat-value" id="statDayHigh">—</div></div>
+    <div class="stat-card"><div class="stat-label">Day Low</div><div class="stat-value" id="statDayLow">—</div></div>
+    <div class="stat-card"><div class="stat-label">52-Wk High</div><div class="stat-value" id="stat52High">—</div></div>
+    <div class="stat-card"><div class="stat-label">52-Wk Low</div><div class="stat-value" id="stat52Low">—</div></div>
+    <div class="stat-card"><div class="stat-label">Market Cap</div><div class="stat-value" id="statMarketCap">—</div></div>
+    <div class="stat-card"><div class="stat-label">Volume</div><div class="stat-value" id="statVolume">—</div></div>
+    <div class="stat-card"><div class="stat-label">P/E Ratio</div><div class="stat-value" id="statPE">—</div></div>
+    <div class="stat-card"><div class="stat-label">EPS</div><div class="stat-value" id="statEPS">—</div></div>
+    <div class="stat-card"><div class="stat-label">Dividend Yield</div><div class="stat-value" id="statDivYield">—</div></div>
+    <div class="stat-card"><div class="stat-label">Beta</div><div class="stat-value" id="statBeta">—</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Price History</div>
+    <div class="range-tabs">
+      <button class="range-tab" onclick="setRange(30)">1M</button>
+      <button class="range-tab" onclick="setRange(90)">3M</button>
+      <button class="range-tab active" onclick="setRange(180)">6M</button>
+      <button class="range-tab" onclick="setRange(365)">1Y</button>
+      <button class="range-tab" onclick="setRange(0)">All</button>
+    </div>
+    <canvas id="priceChart" height="100"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Volume</div>
+    <canvas id="volumeChart" height="60"></canvas>
+  </div>
+
+  <div class="description" id="description" style="display:none">
+    <strong>About</strong>
+    <span id="descriptionText"></span>
+  </div>
+</div>
+
+<footer>Data provided by Alpha Vantage. Free tier limited to 25 requests/day.</footer>
+
+<script>
+  let allDates = [];
+  let allPrices = [];
+  let allVolumes = [];
+  let priceChart = null;
+  let volumeChart = null;
+
+  // Allow pressing Enter to search
+  document.getElementById('tickerInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadStock();
+  });
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').style.display = 'none';
+  }
+
+  function formatPrice(val) {
+    const n = parseFloat(val);
+    if (isNaN(n)) return '—';
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatLargeNum(val) {
+    const n = parseFloat(val);
+    if (isNaN(n) || n === 0) return '—';
+    if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+    if (n >= 1e9)  return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6)  return '$' + (n / 1e6).toFixed(2) + 'M';
+    return '$' + n.toLocaleString();
+  }
+
+  function formatVolume(val) {
+    const n = parseInt(val);
+    if (isNaN(n)) return '—';
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+    return n.toString();
+  }
+
+  function setStat(id, value) {
+    document.getElementById(id).textContent = value && value !== 'None' && value !== '-' ? value : '—';
+  }
+
+  async function loadStock() {
+    const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+    const apiKey = document.getElementById('apiKey').value.trim();
+
+    if (!ticker) { showError('Please enter a ticker symbol.'); return; }
+    if (!apiKey) { showError('Please enter your Alpha Vantage API key.'); return; }
+
+    hideError();
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('searchBtn').disabled = true;
+
+    try {
+      const [quoteData, dailyData, overviewData] = await Promise.all([
+        fetchAV('GLOBAL_QUOTE', ticker, apiKey),
+        fetchAV('TIME_SERIES_DAILY', ticker, apiKey, { outputsize: 'compact' }),
+        fetchAV('OVERVIEW', ticker, apiKey),
+      ]);
+
+      // --- Validate responses ---
+      const quote = quoteData['Global Quote'];
+      if (!quote || !quote['05. price']) {
+        throw new Error(`No data found for "${ticker}". Check the ticker symbol.`);
+      }
+
+      // --- Quote stats ---
+      const price   = parseFloat(quote['05. price']);
+      const change  = parseFloat(quote['09. change']);
+      const changePct = parseFloat(quote['10. change percent']);
+
+      document.getElementById('companyName').childNodes[0].textContent =
+        overviewData['Name'] || ticker;
+      document.getElementById('tickerBadge').textContent = ticker;
+      document.getElementById('currentPrice').textContent = formatPrice(price);
+
+      const changeEl = document.getElementById('priceChange');
+      const sign = change >= 0 ? '+' : '';
+      changeEl.textContent = `${sign}${formatPrice(change)} (${sign}${changePct.toFixed(2)}%)`;
+      changeEl.className = 'price-change ' + (change >= 0 ? 'up' : 'down');
+
+      setStat('statOpen',     formatPrice(quote['02. open']));
+      setStat('statPrevClose',formatPrice(quote['08. previous close']));
+      setStat('statDayHigh',  formatPrice(quote['03. high']));
+      setStat('statDayLow',   formatPrice(quote['04. low']));
+      setStat('statVolume',   formatVolume(quote['06. volume']));
+
+      // --- Overview stats ---
+      setStat('stat52High',    formatPrice(overviewData['52WeekHigh']));
+      setStat('stat52Low',     formatPrice(overviewData['52WeekLow']));
+      setStat('statMarketCap', formatLargeNum(overviewData['MarketCapitalization']));
+      setStat('statPE',        overviewData['PERatio'] && overviewData['PERatio'] !== 'None' ? parseFloat(overviewData['PERatio']).toFixed(2) : '—');
+      setStat('statEPS',       overviewData['EPS'] && overviewData['EPS'] !== 'None' ? '$' + parseFloat(overviewData['EPS']).toFixed(2) : '—');
+
+      const divYield = parseFloat(overviewData['DividendYield']);
+      setStat('statDivYield', !isNaN(divYield) ? (divYield * 100).toFixed(2) + '%' : '—');
+      setStat('statBeta', overviewData['Beta'] && overviewData['Beta'] !== 'None' ? parseFloat(overviewData['Beta']).toFixed(2) : '—');
+
+      // --- Description ---
+      if (overviewData['Description'] && overviewData['Description'] !== 'None') {
+        document.getElementById('descriptionText').textContent = overviewData['Description'];
+        document.getElementById('description').style.display = 'block';
+      } else {
+        document.getElementById('description').style.display = 'none';
+      }
+
+      // --- Price history chart ---
+      const timeSeries = dailyData['Time Series (Daily)'];
+      if (!timeSeries) throw new Error('No price history data returned.');
+
+      allDates   = Object.keys(timeSeries).sort();
+      allPrices  = allDates.map(d => parseFloat(timeSeries[d]['4. close']));
+      allVolumes = allDates.map(d => parseInt(timeSeries[d]['5. volume']));
+
+      setRange(180); // default view
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+
+      // Activate the 6M tab
+      document.querySelectorAll('.range-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === 2);
+      });
+
+    } catch (err) {
+      showError(err.message || 'An unexpected error occurred.');
+    } finally {
+      document.getElementById('searchBtn').disabled = false;
+    }
+  }
+
+  async function fetchAV(fn, symbol, apiKey, extra = {}) {
+    const params = new URLSearchParams({
+      function: fn,
+      symbol,
+      apikey: apiKey,
+      ...extra,
+    });
+    const res = await fetch(`https://www.alphavantage.co/query?${params}`);
+    if (!res.ok) throw new Error(`Network error (${res.status})`);
+    const data = await res.json();
+
+    if (data['Note']) throw new Error('API rate limit reached. The free tier allows 25 requests/day. Please wait and try again.');
+    if (data['Information']) throw new Error('API limit reached: ' + data['Information']);
+
+    return data;
+  }
+
+  function setRange(days) {
+    let dates, prices, volumes;
+
+    if (days === 0) {
+      dates   = allDates;
+      prices  = allPrices;
+      volumes = allVolumes;
+    } else {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+      const idx = allDates.findIndex(d => d >= cutoffStr);
+      dates   = allDates.slice(idx);
+      prices  = allPrices.slice(idx);
+      volumes = allVolumes.slice(idx);
+    }
+
+    // Determine chart color based on performance in range
+    const isUp = prices[prices.length - 1] >= prices[0];
+    const lineColor = isUp ? '#3fb950' : '#f85149';
+    const fillColor = isUp ? 'rgba(63,185,80,0.08)' : 'rgba(248,81,73,0.08)';
+
+    // Thin out labels so x-axis isn't crowded
+    const labelStep = Math.max(1, Math.floor(dates.length / 10));
+    const displayLabels = dates.map((d, i) => i % labelStep === 0 ? d : '');
+
+    drawPriceChart(displayLabels, prices, lineColor, fillColor);
+    drawVolumeChart(displayLabels, volumes, lineColor);
+
+    // Update active tab
+    document.querySelectorAll('.range-tab').forEach(t => {
+      const map = { '1M': 30, '3M': 90, '6M': 180, '1Y': 365, 'All': 0 };
+      t.classList.toggle('active', map[t.textContent] === days);
+    });
+  }
+
+  function drawPriceChart(labels, prices, lineColor, fillColor) {
+    if (priceChart) priceChart.destroy();
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    priceChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Close Price',
+          data: prices,
+          borderColor: lineColor,
+          backgroundColor: fillColor,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          tension: 0.3,
+          fill: true,
+        }],
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            titleColor: '#8b949e',
+            bodyColor: '#e1e4e8',
+            callbacks: {
+              label: ctx => ' $' + ctx.parsed.y.toFixed(2),
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#484f58', maxRotation: 0, font: { size: 11 } },
+            grid: { color: '#21262d' },
+          },
+          y: {
+            position: 'right',
+            ticks: {
+              color: '#484f58',
+              font: { size: 11 },
+              callback: v => '$' + v.toLocaleString(),
+            },
+            grid: { color: '#21262d' },
+          },
+        },
+      },
+    });
+  }
+
+  function drawVolumeChart(labels, volumes, barColor) {
+    if (volumeChart) volumeChart.destroy();
+
+    const ctx = document.getElementById('volumeChart').getContext('2d');
+    volumeChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Volume',
+          data: volumes,
+          backgroundColor: barColor + '80',
+          borderWidth: 0,
+          borderRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            titleColor: '#8b949e',
+            bodyColor: '#e1e4e8',
+            callbacks: {
+              label: ctx => ' ' + formatVolume(ctx.parsed.y),
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#484f58', maxRotation: 0, font: { size: 11 } },
+            grid: { color: '#21262d' },
+          },
+          y: {
+            position: 'right',
+            ticks: {
+              color: '#484f58',
+              font: { size: 11 },
+              callback: v => formatVolume(v),
+            },
+            grid: { color: '#21262d' },
+          },
+        },
+      },
+    });
+  }
+</script>
+</body>
+</html>
