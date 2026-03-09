@@ -8,7 +8,7 @@ A single-page stock research tool that pulls real-time quotes, fundamental data,
 - Fundamental metrics: Market Cap, P/E, EPS, Beta, Dividend Yield, 52-week range
 - Interactive price history chart (line) with selectable ranges: 1M / 3M / 6M / 1Y / All
 - Volume chart (bar) synced to the selected range
-- Chart color reflects performance — green if up, red if down over the chosen period
+- Chart color reflects performance: Green if up, red if down over the chosen period
 - Company description from the Alpha Vantage Overview endpoint
 
 ## Technologies
@@ -23,7 +23,7 @@ A single-page stock research tool that pulls real-time quotes, fundamental data,
 
 1. **Get a free API key** at [alphavantage.co](https://www.alphavantage.co/support/#api-key) (takes ~30 seconds, no credit card needed).
 
-2. **Open `index.html`** directly in any modern browser — no server or install required.
+2. **Open `index.html`** directly in any modern browser, no server or install required.
 
 3. **Enter your API key** in the field at the top of the page.
 
