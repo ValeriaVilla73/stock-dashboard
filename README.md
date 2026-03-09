@@ -38,4 +38,4 @@ If you exceed the limit, the dashboard will display a clear error message rather
 ## Screenshots
 ![Stock Dashboard 1](stock_screenshot_1.png)
 ![Stock Dashboard 2](stock_screenshot_2.png)
-![Stock Dashboard 3](_stockscreenshot_3.png)
+![Stock Dashboard 3](stockscreenshot_3.png)
