@@ -34,3 +34,8 @@ A single-page stock research tool that pulls real-time quotes, fundamental data,
 The free Alpha Vantage tier allows **25 requests per day**. Each search makes 3 parallel requests (Quote, Daily Time Series, Overview), so you get roughly 8 lookups per day before hitting the limit.
 
 If you exceed the limit, the dashboard will display a clear error message rather than silently failing.
+
+## Screenshots
+![Stock Dashboard 1](stock_screenshot_1.png)
+![Stock Dashboard 2](stock_screenshot_2.png)
+![Stock Dashboard 3](_stockscreenshot_3.png)
