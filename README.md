@@ -4,7 +4,7 @@ A single-page stock research tool that pulls real-time quotes, fundamental data,
 
 ## Features
 
-- Current price, day change, and OHLCV stats
+- Current price, **day change**, and OHLCV stats
 - Fundamental metrics: Market Cap, P/E, EPS, Beta, Dividend Yield, 52-week range
 - Interactive price history chart (line) with selectable ranges: 1M / 3M / 6M / 1Y / All
 - Volume chart (bar) synced to the selected range
