@@ -1,4 +1,4 @@
-# Stock Dashboard
+# TANK Stock Dashboard
 
 A single-page stock research tool that pulls real-time quotes, fundamental data, and price history for any US-listed ticker.
 
